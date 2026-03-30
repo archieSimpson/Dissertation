@@ -47,6 +47,11 @@ class RandomWalkSimulation:
         social_signal_lifetime: int,
         use_boundary_reflection: bool,
         plot_limit: float,
+        enable_scent: bool = True,
+        enable_foraging: bool = True,
+        enable_social_signal: bool = True,
+        enable_levy_flight: bool = True,
+        enable_memory_revisit: bool = True,
     ):
         self.num_dots = num_dots
         self.step_size = step_size
@@ -96,6 +101,12 @@ class RandomWalkSimulation:
         self.use_boundary_reflection = use_boundary_reflection
         self.plot_limit = plot_limit
 
+        self.enable_scent = enable_scent
+        self.enable_foraging = enable_foraging
+        self.enable_social_signal = enable_social_signal
+        self.enable_levy_flight = enable_levy_flight
+        self.enable_memory_revisit = enable_memory_revisit
+
         self.positions = np.zeros((num_dots, 2), dtype=float)
         self.positions += np.random.normal(loc=0.0, scale=2.5, size=(num_dots, 2))
 
@@ -108,7 +119,6 @@ class RandomWalkSimulation:
             base_direction_reset_steps + 16,
             size=num_dots,
         )
-        self.direction_persistence = np.random.uniform(0.55, 0.90, size=num_dots)
 
         self.cooldowns = np.zeros(num_dots, dtype=int)
         self.modes = np.full(num_dots, self.MODE_EXPLORATION, dtype=int)
@@ -136,27 +146,16 @@ class RandomWalkSimulation:
         self.history = [self.positions.copy()]
         self.food_history = [(self.food_positions.copy(), self.food_alive.copy())]
 
-        self.total_food_eaten = 0
-        self.current_step = 0
-
     def _generate_food_positions(self):
         all_food = []
-
         for patch in self.food_patches:
             center = np.array(patch["center"], dtype=float)
             spread = float(patch["spread"])
             count = int(patch["count"])
-
-            patch_food = np.random.normal(
-                loc=center,
-                scale=spread,
-                size=(count, 2),
-            )
+            patch_food = np.random.normal(loc=center, scale=spread, size=(count, 2))
             all_food.append(patch_food)
-
         if not all_food:
             return np.empty((0, 2), dtype=float)
-
         return np.vstack(all_food)
 
     def _random_unit_vectors(self, n: int):
@@ -192,7 +191,6 @@ class RandomWalkSimulation:
     def _decay_memories(self):
         self.memory_scores *= self.memory_score_decay
         self.memory_ages[self.memory_active] += 1
-
         weak_mask = self.memory_active & (self.memory_scores < 0.05)
         self.memory_active[weak_mask] = False
         self.memory_scores[weak_mask] = 0.0
@@ -208,8 +206,7 @@ class RandomWalkSimulation:
             if dists[nearest_local] <= self.memory_distance_merge:
                 memory_indices = np.where(active)[0]
                 m_idx = memory_indices[nearest_local]
-                old_score = self.memory_scores[sheep_idx, m_idx]
-                self.memory_scores[sheep_idx, m_idx] = old_score + 1.0
+                self.memory_scores[sheep_idx, m_idx] += 1.0
                 self.memory_centres[sheep_idx, m_idx] = (
                     0.7 * self.memory_centres[sheep_idx, m_idx] + 0.3 * food_pos
                 )
@@ -227,25 +224,12 @@ class RandomWalkSimulation:
         self.memory_scores[sheep_idx, slot] = 1.0
         self.memory_ages[sheep_idx, slot] = 0
 
-    def _penalise_patch_memory(self, sheep_idx: int, patch_pos: np.ndarray):
-        active = self.memory_active[sheep_idx]
-        if not np.any(active):
-            return
-
-        centres = self.memory_centres[sheep_idx, active]
-        dists = np.linalg.norm(centres - patch_pos, axis=1)
-        nearest_local = np.argmin(dists)
-        if dists[nearest_local] <= self.memory_distance_merge:
-            memory_indices = np.where(active)[0]
-            m_idx = memory_indices[nearest_local]
-            self.memory_scores[sheep_idx, m_idx] *= 0.6
-
     def _best_memory_bias(self):
+        if not self.enable_memory_revisit:
+            return np.zeros((self.num_dots, 2), dtype=float)
+
         bias = np.zeros((self.num_dots, 2), dtype=float)
         usable = np.any(self.memory_active, axis=1)
-
-        if not np.any(usable):
-            return bias
 
         for i in np.where(usable)[0]:
             active = self.memory_active[i]
@@ -262,6 +246,9 @@ class RandomWalkSimulation:
     def _nearest_food_scent_bias(self):
         bias = np.zeros((self.num_dots, 2), dtype=float)
         scent_detected = np.zeros(self.num_dots, dtype=bool)
+
+        if not self.enable_scent:
+            return bias, scent_detected
 
         alive_food = self.food_positions[self.food_alive]
         if alive_food.shape[0] == 0:
@@ -287,7 +274,7 @@ class RandomWalkSimulation:
 
     def _social_bias(self):
         bias = np.zeros((self.num_dots, 2), dtype=float)
-        if self.signal_positions.shape[0] == 0:
+        if not self.enable_social_signal or self.signal_positions.shape[0] == 0:
             return bias
 
         deltas = self.signal_positions[None, :, :] - self.positions[:, None, :]
@@ -309,18 +296,11 @@ class RandomWalkSimulation:
         return bias
 
     def _update_search_directions(self):
-        reset_mask = (~self.has_patch_target) & (
-            self.steps_since_food >= self.direction_reset_steps
-        )
-
+        reset_mask = (~self.has_patch_target) & (self.steps_since_food >= self.direction_reset_steps)
         reset_idx = np.where(reset_mask)[0]
         if reset_idx.size > 0:
             old_dirs = self.search_directions[reset_idx]
-            new_dirs = self._random_directions_with_min_turn(
-                old_dirs,
-                self.min_direction_change_radians,
-            )
-
+            new_dirs = self._random_directions_with_min_turn(old_dirs, self.min_direction_change_radians)
             self.search_directions[reset_idx] = new_dirs
             self.steps_since_food[reset_idx] = 0
 
@@ -330,14 +310,9 @@ class RandomWalkSimulation:
             return
 
         self.patch_confidence[active] *= self.patch_confidence_decay
-
-        timed_out = active[
-            self.patch_steps_without_food[active] >= self.patch_timeouts[active]
-        ]
+        timed_out = active[self.patch_steps_without_food[active] >= self.patch_timeouts[active]]
 
         if timed_out.size > 0:
-            for idx in timed_out:
-                self._penalise_patch_memory(idx, self.patch_centres[idx])
             self.has_patch_target[timed_out] = False
             self.patch_steps_without_food[timed_out] = 0
             self.patch_confidence[timed_out] = 0.0
@@ -348,15 +323,15 @@ class RandomWalkSimulation:
     def _update_signals(self):
         if self.signal_positions.shape[0] == 0:
             return
-
         self.signal_ttls -= 1
         keep = self.signal_ttls > 0
-
         self.signal_positions = self.signal_positions[keep]
         self.signal_strengths = self.signal_strengths[keep]
         self.signal_ttls = self.signal_ttls[keep]
 
     def _add_social_signal(self, pos: np.ndarray):
+        if not self.enable_social_signal:
+            return
         self.signal_positions = np.vstack([self.signal_positions, pos.reshape(1, 2)])
         self.signal_strengths = np.append(self.signal_strengths, 1.0)
         self.signal_ttls = np.append(self.signal_ttls, self.social_signal_lifetime)
@@ -391,10 +366,6 @@ class RandomWalkSimulation:
         base_dirs = self._normalise_vectors(self.search_directions + random_noise)
 
         memory_bias = self._best_memory_bias()
-        memory_bias = self._normalise_vectors(memory_bias + 1e-12) * (
-            np.linalg.norm(memory_bias, axis=1, keepdims=True) > 1e-6
-        )
-
         scent_bias, scent_detected = self._nearest_food_scent_bias()
         social_bias = self._social_bias()
 
@@ -402,9 +373,7 @@ class RandomWalkSimulation:
         step_scales = self.base_step_sizes.copy()
 
         self.modes[:] = self.MODE_EXPLORATION
-        inspect_mask = (~self.has_patch_target) & (
-            scent_detected | (np.linalg.norm(social_bias, axis=1) > 0)
-        )
+        inspect_mask = (~self.has_patch_target) & (scent_detected | (np.linalg.norm(social_bias, axis=1) > 0))
         self.modes[inspect_mask] = self.MODE_INSPECTION
         self.modes[self.has_patch_target] = self.MODE_EXPLOITATION
 
@@ -419,14 +388,15 @@ class RandomWalkSimulation:
             )
             move_dirs[exploration_idx] = self._normalise_vectors(combined)
 
-            levy_mask = np.random.rand(exploration_idx.size) < self.levy_flight_probability
-            if np.any(levy_mask):
-                long_steps = np.random.uniform(
-                    self.levy_flight_multiplier_min,
-                    self.levy_flight_multiplier_max,
-                    size=np.sum(levy_mask),
-                )
-                step_scales[exploration_idx[levy_mask]] *= long_steps
+            if self.enable_levy_flight:
+                levy_mask = np.random.rand(exploration_idx.size) < self.levy_flight_probability
+                if np.any(levy_mask):
+                    long_steps = np.random.uniform(
+                        self.levy_flight_multiplier_min,
+                        self.levy_flight_multiplier_max,
+                        size=np.sum(levy_mask),
+                    )
+                    step_scales[exploration_idx[levy_mask]] *= long_steps
 
         inspection_idx = np.where(self.modes == self.MODE_INSPECTION)[0]
         if inspection_idx.size > 0:
@@ -441,7 +411,7 @@ class RandomWalkSimulation:
             step_scales[inspection_idx] *= self.inspection_speed_reduction
 
         exploitation_idx = np.where(self.modes == self.MODE_EXPLOITATION)[0]
-        if exploitation_idx.size > 0:
+        if exploitation_idx.size > 0 and self.enable_foraging:
             to_patch = self.patch_centres[exploitation_idx] - self.positions[exploitation_idx]
             dist = np.linalg.norm(to_patch, axis=1)
             to_patch_unit = self._normalise_vectors(to_patch)
@@ -480,9 +450,7 @@ class RandomWalkSimulation:
                 combined[far] = self._normalise_vectors(far_combined)
 
             move_dirs[exploitation_idx] = combined
-
-            confidence_scale = 1.0 / (1.0 + 0.12 * self.patch_confidence[exploitation_idx])
-            step_scales[exploitation_idx] *= self.forage_speed_reduction * confidence_scale
+            step_scales[exploitation_idx] *= self.forage_speed_reduction
 
         self.positions += step_scales.reshape(-1, 1) * move_dirs
         self.steps_since_food += 1
@@ -515,37 +483,15 @@ class RandomWalkSimulation:
             self.food_alive[food_global_idx] = False
             self.cooldowns[sheep_idx] = self.eat_cooldown_steps
             self.just_ate[sheep_idx] = True
-            self.total_food_eaten += 1
 
             self._remember_food_patch(sheep_idx, eaten_food_pos)
-
-            if self.has_patch_target[sheep_idx]:
-                same_patch = (
-                    np.linalg.norm(self.patch_centres[sheep_idx] - eaten_food_pos)
-                    <= self.patch_radii[sheep_idx]
-                )
-            else:
-                same_patch = False
 
             self.has_patch_target[sheep_idx] = True
             self.patch_centres[sheep_idx] = eaten_food_pos
             self.patch_steps_without_food[sheep_idx] = 0
-
-            if same_patch:
-                self.patch_confidence[sheep_idx] += self.patch_confidence_gain
-                self.patch_radii[sheep_idx] = max(
-                    self.min_patch_radius,
-                    self.patch_radii[sheep_idx] * self.patch_radius_shrink_factor,
-                )
-                self.patch_timeouts[sheep_idx] += self.patch_timeout_growth
-            else:
-                self.patch_confidence[sheep_idx] = 1.0
-                self.patch_radii[sheep_idx] = self.initial_patch_radius
-                self.patch_timeouts[sheep_idx] = self.patch_timeout_steps
-
-            self.patch_radii[sheep_idx] = min(
-                self.max_patch_radius, self.patch_radii[sheep_idx]
-            )
+            self.patch_confidence[sheep_idx] = 1.0
+            self.patch_radii[sheep_idx] = self.initial_patch_radius
+            self.patch_timeouts[sheep_idx] = self.patch_timeout_steps
 
             self.steps_since_food[sheep_idx] = 0
             self.search_directions[sheep_idx] = self._random_unit_vectors(1)[0]
@@ -557,31 +503,10 @@ class RandomWalkSimulation:
             if alive_indices.size == 0:
                 break
 
-        exploiters = np.where(self.has_patch_target)[0]
-        if exploiters.size > 0:
-            widen_mask = self.patch_steps_without_food[exploiters] > 8
-            widen_idx = exploiters[widen_mask]
-            if widen_idx.size > 0:
-                self.patch_radii[widen_idx] = np.minimum(
-                    self.max_patch_radius,
-                    self.patch_radii[widen_idx] * self.patch_radius_growth_factor,
-                )
-
     def _decay_states(self):
         self.cooldowns = np.maximum(self.cooldowns - 1, 0)
 
-    def get_state_counts(self):
-        return {
-            "exploring": int(np.sum(self.modes == self.MODE_EXPLORATION)),
-            "inspecting": int(np.sum(self.modes == self.MODE_INSPECTION)),
-            "exploiting": int(np.sum(self.modes == self.MODE_EXPLOITATION)),
-            "cooldown": int(np.sum(self.cooldowns > 0)),
-            "food_remaining": int(np.sum(self.food_alive)),
-            "food_eaten": int(self.total_food_eaten),
-        }
-
     def step(self):
-        self.current_step += 1
         self._move_agents()
         self._handle_food_collisions()
 
