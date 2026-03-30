@@ -38,10 +38,10 @@ def initialise_flock(cfg: SimulationConfig, rng: np.random.Generator) -> list[Sh
         heading = float(rng.uniform(-np.pi, np.pi))
 
         if cfg.scenario == "abundant":
-            speed = rng.uniform(0.03, 0.16)
+            speed = rng.uniform(0.04, 0.22)
             state = BehaviourState.GRAZING
         else:
-            speed = rng.uniform(0.10, 0.28)
+            speed = rng.uniform(0.10, 0.30)
             state = BehaviourState.TRAVELLING
 
         vel = heading_to_velocity(heading, speed)
@@ -69,115 +69,84 @@ def update_agent_state(
     tcfg: StateTransitionConfig = cfg.transitions
     sheep.state_age += 1
 
-    if sheep.regroup_cooldown > 0:
-        sheep.regroup_cooldown -= 1
-
     field_scale = max(cfg.field.width, cfg.field.height)
     dist_to_centroid = float(np.linalg.norm(ctx.flock_centroid - sheep.position))
 
-    close_enough = dist_to_centroid < cfg.flock.neighbour_radius * 0.95
-    far_from_group = dist_to_centroid > cfg.flock.neighbour_radius * 2.3
-    isolated = ctx.neighbour_count <= 0
-    socially_connected = ctx.neighbour_count >= 2
-    flock_compact = ctx.flock_spread < 0.16 * field_scale
+    close_enough = dist_to_centroid < cfg.flock.neighbour_radius * 0.65
+    far_from_group = dist_to_centroid > cfg.flock.neighbour_radius * 1.8
+    isolated = ctx.neighbour_count <= 1
+    weakly_connected = ctx.neighbour_count <= 2
+    socially_connected = ctx.neighbour_count >= 4
+    flock_compact = ctx.flock_spread < 0.11 * field_scale
 
-    sheep_bias = 1.0 + 0.10 * np.sin(0.73 * sheep.sheep_id + 0.11)
+    # Mild deterministic per-sheep heterogeneity so agents do not synchronise perfectly
+    sheep_bias = 1.0 + 0.12 * np.sin(0.73 * sheep.sheep_id + 0.11)
+
     local_food_enter = tcfg.local_food_enter_graze * sheep_bias
     local_food_exit = tcfg.local_food_exit_graze * sheep_bias
 
-    if isolated or far_from_group:
-        sheep.separation_steps += 1
-    else:
-        sheep.separation_steps = max(0, sheep.separation_steps - 1)
-
+    # Circadian resting
     if ctx.active_factor < cfg.circadian.resting_threshold:
         if sheep.state != BehaviourState.REGROUPING:
             sheep.state = BehaviourState.RESTING
             sheep.state_age = 0
             return
 
-    # Regrouping must be brief and must force an exit.
+    # Explicit exit from regrouping
     if sheep.state == BehaviourState.REGROUPING:
-        if cfg.scenario == "abundant":
-            min_regroup_steps = 4
-            must_exit_steps = 10
-        else:
-            min_regroup_steps = 8
-            must_exit_steps = 16
+        min_regroup_steps = 8 if cfg.scenario == "abundant" else 10
 
-        ready_to_exit = (
+        if (
             sheep.state_age >= min_regroup_steps
             and close_enough
             and socially_connected
             and flock_compact
-        )
-
-        timed_out = sheep.state_age >= must_exit_steps
-
-        if ready_to_exit or timed_out:
-            sheep.separation_steps = 0
-            sheep.regroup_cooldown = 24 if cfg.scenario == "abundant" else 12
-
-            if cfg.scenario == "abundant":
-                # After regrouping in rich pasture, prefer returning to grazing,
-                # not orbiting around the centroid.
-                if ctx.local_food >= local_food_exit * 0.85 and ctx.local_health > 0.24:
-                    sheep.state = BehaviourState.GRAZING
-                else:
-                    sheep.state = BehaviourState.TRAVELLING
+        ):
+            if ctx.local_food >= local_food_enter and ctx.local_health > 0.40:
+                sheep.state = BehaviourState.GRAZING
             else:
-                if ctx.local_food >= local_food_enter and ctx.local_health > 0.30:
-                    sheep.state = BehaviourState.GRAZING
-                else:
-                    sheep.state = BehaviourState.TRAVELLING
-
+                sheep.state = BehaviourState.TRAVELLING
             sheep.state_age = 0
             return
 
         return
 
+    # Wake from resting
     if sheep.state == BehaviourState.RESTING:
         if ctx.active_factor >= cfg.circadian.resting_threshold:
-            if ctx.local_food >= local_food_enter and ctx.local_health > 0.30:
+            if ctx.local_food >= local_food_enter and ctx.local_health > 0.40:
                 sheep.state = BehaviourState.GRAZING
             else:
                 sheep.state = BehaviourState.TRAVELLING
             sheep.state_age = 0
         return
 
-    # In abundant fields, regroup only for true sustained stragglers, and never
-    # immediately after leaving regrouping.
-    if sheep.regroup_cooldown == 0:
-        if cfg.scenario == "abundant":
-            if (
-                sheep.separation_steps >= 20
-                and isolated
-                and dist_to_centroid > cfg.flock.neighbour_radius * 2.3
-                and ctx.local_food < local_food_exit * 0.75
-            ):
-                sheep.state = BehaviourState.REGROUPING
-                sheep.state_age = 0
-                return
-        else:
-            if sheep.separation_steps >= 8 and (isolated or far_from_group):
-                sheep.state = BehaviourState.REGROUPING
-                sheep.state_age = 0
-                return
+    # Enter regrouping only if this sheep is personally separated
+    if isolated or far_from_group:
+        sheep.state = BehaviourState.REGROUPING
+        sheep.state_age = 0
+        return
 
+    # Abundant pasture
     if cfg.scenario == "abundant":
         should_graze = (
             ctx.local_food >= local_food_exit
-            and ctx.local_health > 0.24
-            and sheep.energy > 0.20
+            and ctx.local_health > 0.45
+            and sheep.energy > 0.26
         )
 
         should_travel = (
-            ctx.local_food < local_food_exit * 0.80
-            or ctx.local_health < 0.20
-            or sheep.state_age > 130
+            ctx.local_food < local_food_exit * 0.92
+            or ctx.local_health < 0.40
+            or sheep.state_age > 55
         )
 
         if sheep.state == BehaviourState.GRAZING:
+            if weakly_connected and dist_to_centroid > cfg.flock.neighbour_radius * 1.35:
+                sheep.state = BehaviourState.REGROUPING
+                sheep.state_age = 0
+                return
+
             if should_travel:
                 sheep.state = BehaviourState.TRAVELLING
                 sheep.state_age = 0
@@ -185,7 +154,13 @@ def update_agent_state(
             return
 
         if sheep.state == BehaviourState.TRAVELLING:
-            min_travel_steps = 40
+            min_travel_steps = 14
+
+            if weakly_connected and dist_to_centroid > cfg.flock.neighbour_radius * 1.45:
+                sheep.state = BehaviourState.REGROUPING
+                sheep.state_age = 0
+                return
+
             if sheep.state_age < min_travel_steps:
                 return
 
@@ -199,6 +174,7 @@ def update_agent_state(
         sheep.state_age = 0
         return
 
+    # Scarce pasture
     should_graze = (
         ctx.local_food >= local_food_enter
         and ctx.local_health > 0.34
@@ -213,6 +189,11 @@ def update_agent_state(
     )
 
     if sheep.state == BehaviourState.GRAZING:
+        if weakly_connected and dist_to_centroid > cfg.flock.neighbour_radius * 1.55:
+            sheep.state = BehaviourState.REGROUPING
+            sheep.state_age = 0
+            return
+
         if should_travel:
             sheep.state = BehaviourState.TRAVELLING
             sheep.state_age = 0
@@ -221,6 +202,12 @@ def update_agent_state(
 
     if sheep.state == BehaviourState.TRAVELLING:
         min_travel_steps = 24
+
+        if isolated and dist_to_centroid > cfg.flock.neighbour_radius * 1.75:
+            sheep.state = BehaviourState.REGROUPING
+            sheep.state_age = 0
+            return
+
         if sheep.state_age < min_travel_steps:
             return
 
@@ -251,54 +238,39 @@ def desired_velocity(
     mem_dir = memory_vector(sheep, ctx)
 
     if sheep.state == BehaviourState.GRAZING:
+        # moderate attraction, local spread allowed
         social = state_social_force(
             sheep,
             flock,
             cfg.flock,
-            attraction_scale=0.24 if cfg.scenario == "abundant" else 0.42,
-            alignment_scale=0.14 if cfg.scenario == "abundant" else 0.24,
-            repulsion_scale=1.25,
+            attraction_scale=0.42,
+            alignment_scale=0.28,
+            repulsion_scale=1.20,
         )
 
         raw_dir = (
-            1.04 * ctx.sensory_gradient
-            + 0.06 * mem_dir
-            + 0.10 * social
-            + 0.08 * prev_dir
+            0.88 * ctx.sensory_gradient
+            + 0.18 * mem_dir
+            + 0.18 * social
+            + 0.16 * prev_dir
         )
         base_dir = safe_unit(raw_dir if np.linalg.norm(raw_dir) > 1e-9 else prev_dir)
-        speed = cfg.flock.grazing_speed * (0.52 + 0.50 * ctx.active_factor)
-        turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 1.25)
-        inertia = 0.22
+        speed = cfg.flock.grazing_speed * (0.58 + 0.62 * ctx.active_factor)
+        turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 1.18)
+        inertia = 0.34
 
     elif sheep.state == BehaviourState.TRAVELLING:
-        if cfg.scenario == "abundant":
-            social = state_social_force(
-                sheep,
-                flock,
-                cfg.flock,
-                attraction_scale=0.01,
-                alignment_scale=0.01,
-                repulsion_scale=0.75,
-            )
-            raw_dir = (
-                0.92 * prev_dir
-                + 0.12 * mem_dir
-                + 0.04 * ctx.sensory_gradient
-                + 0.00 * social
-            )
-            speed = cfg.flock.travel_speed * (0.98 + 0.06 * ctx.active_factor)
-            turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.18)
-            inertia = 0.96
-        else:
-            social = state_social_force(
-                sheep,
-                flock,
-                cfg.flock,
-                attraction_scale=0.06,
-                alignment_scale=0.06,
-                repulsion_scale=0.90,
-            )
+        # weak attraction, strong directional persistence
+        social = state_social_force(
+            sheep,
+            flock,
+            cfg.flock,
+            attraction_scale=0.10 if cfg.scenario == "scarce" else 0.14,
+            alignment_scale=0.08 if cfg.scenario == "scarce" else 0.10,
+            repulsion_scale=0.90,
+        )
+
+        if cfg.scenario == "scarce":
             raw_dir = (
                 0.82 * prev_dir
                 + 0.46 * mem_dir
@@ -308,53 +280,44 @@ def desired_velocity(
             speed = cfg.flock.travel_speed * (1.00 + 0.24 * ctx.active_factor)
             turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.26)
             inertia = 0.92
+        else:
+            raw_dir = (
+                0.72 * prev_dir
+                + 0.34 * mem_dir
+                + 0.18 * ctx.sensory_gradient
+                + 0.06 * social
+            )
+            speed = cfg.flock.travel_speed * (0.84 + 0.16 * ctx.active_factor)
+            turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.46)
+            inertia = 0.84
 
         base_dir = safe_unit(raw_dir if np.linalg.norm(raw_dir) > 1e-9 else prev_dir)
 
     elif sheep.state == BehaviourState.REGROUPING:
+        # stronger attraction than grazing, but temporary
+        social = state_social_force(
+            sheep,
+            flock,
+            cfg.flock,
+            attraction_scale=0.55,
+            alignment_scale=0.20,
+            repulsion_scale=1.00,
+        )
         to_centroid = safe_unit(ctx.flock_centroid - sheep.position)
 
-        if cfg.scenario == "abundant":
-            # Very light regrouping: enough to reconnect, not enough to pin them at the centre.
-            social = state_social_force(
-                sheep,
-                flock,
-                cfg.flock,
-                attraction_scale=0.16,
-                alignment_scale=0.06,
-                repulsion_scale=1.05,
-            )
-            raw_dir = (
-                0.18 * to_centroid
-                + 0.10 * social
-                + 0.28 * ctx.sensory_gradient
-                + 0.24 * prev_dir
-            )
-            speed = cfg.flock.regroup_speed * 0.62
-            turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.30)
-            inertia = 0.44
-        else:
-            social = state_social_force(
-                sheep,
-                flock,
-                cfg.flock,
-                attraction_scale=0.55,
-                alignment_scale=0.20,
-                repulsion_scale=1.00,
-            )
-            raw_dir = (
-                0.46 * to_centroid
-                + 0.24 * social
-                + 0.14 * ctx.sensory_gradient
-                + 0.16 * prev_dir
-            )
-            speed = cfg.flock.regroup_speed * (0.72 + 0.18 * ctx.active_factor)
-            turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.38)
-            inertia = 0.52
-
+        raw_dir = (
+            0.46 * to_centroid
+            + 0.24 * social
+            + 0.14 * ctx.sensory_gradient
+            + 0.16 * prev_dir
+        )
         base_dir = safe_unit(raw_dir if np.linalg.norm(raw_dir) > 1e-9 else to_centroid)
+        speed = cfg.flock.regroup_speed * (0.72 + 0.18 * ctx.active_factor)
+        turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.38)
+        inertia = 0.52
 
-    else:
+    else:  # RESTING
+        # almost no social force
         base_dir = prev_dir
         speed = cfg.flock.resting_speed
         turn_noise = rng.normal(0.0, cfg.flock.stochastic_turn_std * 0.10)

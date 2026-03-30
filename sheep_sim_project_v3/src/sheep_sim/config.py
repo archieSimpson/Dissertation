@@ -42,19 +42,20 @@ class FoodConfig:
 
 @dataclass(slots=True)
 class FlockConfig:
-    n_sheep: int = 40
-    neighbour_radius: float = 12.0
-    repulsion_radius: float = 3.5
-    attraction_weight: float = 0.45
-    alignment_weight: float = 0.20
-    repulsion_weight: float = 1.35
+    n_sheep: int = 36
+    neighbour_radius: float = 14.0
+    repulsion_radius: float = 2.5
+    attraction_weight: float = 0.055
+    alignment_weight: float = 0.060
+    repulsion_weight: float = 0.22
     cohesion_target_weight: float = 0.020
-    stochastic_turn_std: float = 0.22
-    max_speed: float = 0.90
-    grazing_speed: float = 0.22
-    travel_speed: float = 0.60
-    regroup_speed: float = 0.42
-    resting_speed: float = 0.02
+    stochastic_turn_std: float = 0.20
+    max_speed: float = 1.55
+    grazing_speed: float = 0.28
+    travel_speed: float = 1.25
+    regroup_speed: float = 0.95
+    resting_speed: float = 0.03
+
 
 @dataclass(slots=True)
 class CircadianConfig:

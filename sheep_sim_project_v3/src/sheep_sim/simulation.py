@@ -212,29 +212,10 @@ class SheepSimulation:
 
     def _memory_target(self, sheep: SheepAgent) -> np.ndarray:
         assert sheep.memory_map is not None
-
         if np.max(sheep.memory_map) <= 1e-9:
             return sheep.position.copy()
-
-        values = sheep.memory_map.copy()
-        rows, cols = values.shape
-
-        pos_row, pos_col = self._grid_index(sheep.position)
-
-        yy, xx = np.meshgrid(np.arange(rows), np.arange(cols), indexing="ij")
-        dist_cells = np.sqrt((yy - pos_row) ** 2 + (xx - pos_col) ** 2)
-
-        min_dist = 8 if self.cfg.scenario == "abundant" else 5
-        far_mask = dist_cells >= min_dist
-
-        candidate_values = np.where(far_mask, values, -np.inf)
-
-        if np.all(~np.isfinite(candidate_values)):
-            flat_idx = int(np.argmax(values))
-        else:
-            flat_idx = int(np.argmax(candidate_values))
-
-        row, col = np.unravel_index(flat_idx, values.shape)
+        flat_idx = int(np.argmax(sheep.memory_map))
+        row, col = np.unravel_index(flat_idx, sheep.memory_map.shape)
         x = (col + 0.5) / self.cfg.field.grid_cols * self.cfg.field.width
         y = (row + 0.5) / self.cfg.field.grid_rows * self.cfg.field.height
         return np.array([x, y], dtype=float)

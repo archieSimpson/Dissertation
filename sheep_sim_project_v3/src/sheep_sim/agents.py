@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 import numpy as np
@@ -28,8 +28,6 @@ class SheepAgent:
     cumulative_food: float = 0.0
     state_age: int = 0
     path_length: float = 0.0
-    separation_steps: int = 0
-    regroup_cooldown: int = 0
 
     def speed(self) -> float:
         return float(np.linalg.norm(self.velocity))
