@@ -170,13 +170,21 @@ class SheepSimulation:
         assert sheep.memory_map is not None
         if np.max(sheep.memory_map) <= 1e-9:
             return sheep.position.copy()
+
         values = sheep.memory_map.copy()
         rows, cols = values.shape
         pos_row, pos_col = self._grid_index(sheep.position)
         yy, xx = np.meshgrid(np.arange(rows), np.arange(cols), indexing="ij")
         dist_cells = np.sqrt((yy - pos_row) ** 2 + (xx - pos_col) ** 2)
-        min_dist = 8 if self.cfg.scenario == "abundant" else 5
-        weighted = np.where(dist_cells >= min_dist, values, -np.inf)
+
+        if self.cfg.scenario == "abundant":
+            min_dist = 4
+            distance_bonus = np.clip(dist_cells / 12.0, 0.0, 1.0)
+            weighted = np.where(dist_cells >= min_dist, values * (0.88 + 0.12 * distance_bonus), -np.inf)
+        else:
+            min_dist = 5
+            weighted = np.where(dist_cells >= min_dist, values, -np.inf)
+
         flat_idx = int(np.argmax(values if np.all(~np.isfinite(weighted)) else weighted))
         row, col = np.unravel_index(flat_idx, values.shape)
         return np.array([
@@ -187,7 +195,10 @@ class SheepSimulation:
     def _home_target(self, sheep: SheepAgent) -> np.ndarray:
         assert sheep.home_target is not None
         if sheep.last_food_intake > 0.004:
-            sheep.home_target = 0.92 * sheep.home_target + 0.08 * sheep.position
+            blend = 0.18 if self.cfg.scenario == "abundant" else 0.08
+            sheep.home_target = (1.0 - blend) * sheep.home_target + blend * sheep.position
+        elif self.cfg.scenario == "abundant":
+            sheep.home_target = 0.995 * sheep.home_target + 0.005 * sheep.position
         return sheep.home_target.copy()
 
     def _grid_index(self, pos: np.ndarray) -> tuple[int, int]:

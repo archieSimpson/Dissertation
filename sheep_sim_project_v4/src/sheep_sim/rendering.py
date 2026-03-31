@@ -32,7 +32,7 @@ STATE_LABELS = {
 
 STATE_DESCRIPTIONS = {
     BehaviourState.GRAZING: "Short steps, local patch use, high turning",
-    BehaviourState.WALKING: "Routine relocation between nearby patches",
+    BehaviourState.WALKING: "Routine relocation between nearby good patches",
     BehaviourState.TRAVELLING: "Longer moves, active search or route switching",
     BehaviourState.REGROUPING: "Social pull dominates, flock cohesion increases",
     BehaviourState.RESTING: "Very low speed, circadian low-activity phase",
@@ -69,7 +69,6 @@ class LiveRenderer:
         self.ax_panel.clear()
         self.ax_panel.axis("off")
 
-        # Composite background: greener areas reflect productive NDVI, redder overlay reflects degradation.
         food_img = self.food.biomass
         degraded = 1.0 - self.food.health
         composite = np.clip(0.78 * food_img + 0.12 * self.food.ndvi - 0.18 * degraded, 0.0, None)
@@ -250,7 +249,6 @@ class LiveRenderer:
     def close(self) -> None:
         plt.ioff()
         plt.close(self.fig)
-
 
 
 def save_final_frame(

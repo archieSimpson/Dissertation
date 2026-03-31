@@ -39,6 +39,8 @@ class SheepAgent:
     patch_leave_bias: float = 1.0
     preferred_spacing: float = 1.0
     home_target: np.ndarray | None = None
+    explore_heading: float = 0.0
+    explore_timer: int = 0
 
     def speed(self) -> float:
         return float(np.linalg.norm(self.velocity))

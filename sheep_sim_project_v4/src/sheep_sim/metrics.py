@@ -31,7 +31,7 @@ class MetricsRecorder:
         hull_area = convex_hull_area(positions)
         nn = mean_nearest_neighbour_distance(positions)
         pol = polarization(velocities)
-        comps = connected_components_from_distance(positions, threshold=10.0)
+        comps = connected_components_from_distance(positions, threshold=15.0)    
         xs = positions[:, 0]
         ys = positions[:, 1]
         elongation = float((xs.max() - xs.min()) / max(ys.max() - ys.min(), 1e-9))
