@@ -1,25 +1,42 @@
-.venv
-venv
-env
+.venv/
+venv/
+env/
 
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 .DS_Store
 Thumbs.db
 
+.vscode/
+.idea/
+*.swp
+*.swo
+
 _build_*.py
+
+data/outputs/
+data/archive/
+data/csvs/
+data/figures/
+outputs
+outputs/
+outputs_v*/
+*_outputs/
+scripts/*/outputs/
 
 *.tar.gz
 *.zip
 *.log
 
-outputs/
-outputs_v*/
-*_outputs/
-sheep_sim_pro/data/
-
 __azurite_*.json
 __blobstorage__/
+
+build/
+dist/
+*.egg-info/
