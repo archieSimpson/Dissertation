@@ -51,6 +51,8 @@ random-walk-simulation/
     ├── plots/
     ├── convergence_study/
     ├── diagnostics/
+```
+
 ---
 
 ## Installation
