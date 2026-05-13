@@ -1,20 +1,3 @@
-"""
-Diagnostic recording for §4.x behavioural confirmations.
-
-Four scenarios × three behaviour seeds (landscape_seed = 7 fixed). Per-seed
-outputs: metrics.csv (per-step group metrics), visit_grid.npy (binary
-coverage), snapshots.npz (positions/velocities/states at 08:00, 14:00,
-22:00 — radial_increase + ring only). Per-scenario figure suites tailored
-to each scenario's evidence type.
-
-  uniform_high     state proportions, mean speed, coverage heatmap
-  uniform_low      + memory density
-  radial_increase  + NND, cluster count, contagion, snapshots
-  ring             + cumulative food, memory density, snapshots
-
-Re-runs only re-simulate seeds whose cached files are absent. Plots are
-always re-rendered from cached data.
-"""
 from __future__ import annotations
 
 import sys

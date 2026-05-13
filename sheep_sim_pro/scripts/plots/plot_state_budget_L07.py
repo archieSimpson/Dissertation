@@ -1,13 +1,3 @@
-"""State-budget time-series for abundant + scarce on landscape_seed = 7.
-
-For each scenario, loads the converged-N metrics CSVs from chapter3_combined
-(N = 7 for abundant, N = 6 for scarce on L07), averages the per-state agent
-counts across seeds at each step, and renders a stacked-area plot showing the
-percentage of the flock in each behavioural state across the 16-hour
-simulated active window.
-
-Output: outputs/chapter3_combined/state_budget_L07.png
-"""
 from __future__ import annotations
 
 import json
@@ -52,7 +42,6 @@ OUT_PATH     = HERE / "outputs" / "chapter3_combined" / "state_budget_L07.png"
 
 
 def converged_n(scenario: str) -> int:
-    """Read the spatially-converged N for (scenario, L07) from the pipeline summary."""
     if not SUMMARY_PATH.exists():
         return 7 if scenario == "abundant" else 6
     summary = json.loads(SUMMARY_PATH.read_text())
@@ -63,7 +52,6 @@ def converged_n(scenario: str) -> int:
 
 
 def load_state_counts(scenario: str, n_seeds: int) -> np.ndarray:
-    """Return shape (n_states, n_steps) array of mean per-state agent counts."""
     csv_dir = CSV_ROOTS[scenario] / f"L{LANDSCAPE:02d}"
     seeds = []
     for s in range(1, n_seeds + 1):

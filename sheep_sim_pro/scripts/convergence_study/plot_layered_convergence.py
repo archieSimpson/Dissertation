@@ -1,17 +1,3 @@
-"""Layered convergence curve: 2 scenarios x 3 landscapes = 6 lines.
-
-Reads the spatial_trace.csv produced by run_combined_validation.py for each
-(scenario, landscape) pair and overlays them on a single figure. Matches the
-visual style of run_convergence.py's plot_convergence_curve so this can sit
-next to the existing convergence_curve.png in the dissertation.
-
-Visual encoding:
-  colour      → scenario (abundant green, scarce red)
-  line style  → landscape (L07 solid, L23 dashed, L41 dotted)
-  marker      → scenario (abundant circle, scarce square)
-  vertical dashed line per series → that series' converged N (if any)
-  horizontal dashed line at 3%   → the new-territory threshold
-"""
 from __future__ import annotations
 
 import sys

@@ -1,13 +1,3 @@
-"""Run the corridors landscape under both parameter families (abundant, scarce)
-for three seeds each, saving final-frame PNGs.
-
-The corridors NDVI geometry (food.py:161) is held fixed; only the
-food/transitions/flock/field parameter overrides differ between the two halves.
-The FSM in states.py treats corridors as rich-path regardless, so the scarce
-half is a hybrid (rich FSM, scarce thresholds). Spawn geometry (Gaussian
-sigma=5m at field centre, states.py:50) puts all 40 agents inside the 22 m
-central island.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

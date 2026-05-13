@@ -1,23 +1,3 @@
-"""Per-landscape converged validation metrics for Chapter 3 §3.6.
-
-For abundant scenario across landscape seeds [7, 23, 41], runs behaviour
-seeds 1..N (cap N at 18) and computes four validation metrics per seed:
-
-  - NND_active: mean of mean_nearest_neighbour_distance over rows where
-    resting_count < 26 (active-step proxy)
-  - resting_pct: mean of (resting_count / 40) * 100 across all 1920 steps
-  - daily_distance: mean_path_length at the final row (step 1919)
-  - bimodal_pass: 1 if smoothed mean_speed (60-step centred rolling mean)
-    has a local max in [1, 720) AND a local max in [961, 1919) AND the
-    max value over [960, 1920) > max value over [0, 720); else 0
-
-Convergence rule: starting from S=3, compare running mean at S vs S-1 for
-all four metrics. Stop when ALL FOUR have rel_change < 2 % across TWO
-consecutive seeds. Cap at S=18.
-
-Outputs: per-landscape metrics_abundant_L<LL>_S<SS>.csv and trace_L<LL>.csv,
-plus a summary.json and summary_table.md at the root.
-"""
 from __future__ import annotations
 
 import json
@@ -44,7 +24,6 @@ PYTHON      = sys.executable
 
 
 def run_simulation(landscape: int, seed: int, run_dir: Path) -> Path:
-    """Invoke `python -m sheep_sim` and return the path to metrics.csv."""
     if run_dir.exists():
         shutil.rmtree(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)

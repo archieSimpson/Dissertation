@@ -1,9 +1,3 @@
-"""Seed search for an even left/right split in the corridors scenario.
-
-Runs corridors on landscape 7 for a range of behaviour seeds; counts the
-final agent positions in the left corridor (x < 30) vs right corridor
-(x > 190); reports the seed closest to 20/20.
-"""
 from __future__ import annotations
 import time
 import numpy as np

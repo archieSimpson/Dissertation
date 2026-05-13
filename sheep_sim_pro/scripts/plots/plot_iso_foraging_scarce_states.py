@@ -1,11 +1,3 @@
-"""State-composition stacked area for the isolated-foraging configuration
-of the scarce scenario on landscape 7.
-
-All features disabled except foraging: no social cohesion, no circadian
-rhythm (so no RESTING), no memory map, no personality variation, no terrain
-gradient. The state budget reflects the FSM driven by food gradient and
-MVT-style patch departure alone.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

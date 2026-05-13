@@ -1,13 +1,3 @@
-"""Clean (no axis labels, no title, no colour-key panel) variant of the
-extract_memory_map.py figure. Same simulation setup (abundant, seed=1,
-landscape_seed=7, 2500 steps), same memory-map cmap, same trajectory and
-u_mem arrow. Differences:
-
-  - single panel (the right-side colour-key explanation panel is removed)
-  - no axis title, no x/y tick labels, no axis labels
-  - "Memory value" colorbar label larger and bolder
-  - highest-memory-cell star marker enlarged with a white ring around it
-"""
 from __future__ import annotations
 
 import io

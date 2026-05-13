@@ -1,16 +1,3 @@
-"""Per-agent memory-map density over time for the isolated-memory
-configuration of the scarce scenario.
-
-All features off except memory. The memory map is the only spatial-cognition
-input the sheep have, and with no foraging FSM and no circadian forcing they
-mostly drift around their spawn, accumulating memory in cells they visit.
-
-Picks three agents by final-step density (highest, median, lowest) and
-renders their density-over-time curves as a 3-panel figure.
-
-Density definition: fraction of memory-map cells with value > 0.01 (treats
-a cell as "remembered" once it's above the decay floor noise).
-"""
 from __future__ import annotations
 
 from dataclasses import replace

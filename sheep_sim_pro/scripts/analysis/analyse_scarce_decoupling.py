@@ -15,10 +15,6 @@ def find_patch_centres(
     percentile: float = 90.0,
     n_keep: int = 3,
 ) -> list[tuple[float, float]]:
-    """Return the centroids (row, col) of the n_keep largest connected
-    components above the given NDVI percentile. Naive 'all components above
-    threshold' returns 60+ speckle blobs; the size distribution is bimodal so
-    keeping the top-3 by area isolates the true patches."""
     threshold = np.percentile(ndvi, percentile)
     mask = ndvi >= threshold
     labelled, n = label(mask)
@@ -37,8 +33,6 @@ def corridor_mask(
     half_width_cells: float,
     patch_exclude_radius_cells: float = 4.0,
 ) -> np.ndarray:
-    """Cells within half_width_cells of any segment connecting two patches,
-    excluding the patches themselves."""
     rr, cc = np.meshgrid(np.arange(rows), np.arange(cols), indexing="ij")
     mask = np.zeros((rows, cols), dtype=bool)
     for i, (r1, c1) in enumerate(patch_centres):

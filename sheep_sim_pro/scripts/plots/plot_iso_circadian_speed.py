@@ -1,13 +1,3 @@
-"""Average agent speed over time for the isolated-circadian configuration.
-
-All features off except circadian. The mean speed curve reflects only the
-bimodal active_factor (no food gradient, no social cohesion, no memory,
-no personality variation, no terrain). This produces the cleanest possible
-test of the circadian module: speed should peak when active_factor is high
-and dip to ~0 during the RESTING window.
-
-Scenario: abundant on landscape_seed = 7, seed = 42, 1920 steps.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

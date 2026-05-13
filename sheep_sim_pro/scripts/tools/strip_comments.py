@@ -1,11 +1,3 @@
-"""Strip # comments from every .py, .sh, .toml file in sheep_sim_pro.
-
-  - .py files: tokenize-based stripping (won't touch # inside strings).
-    Docstrings and shebangs are preserved.
-  - .sh and .toml: regex line-based stripping. Shebang preserved.
-Skips: .venv, __pycache__, .pytest_cache. .md files are skipped (markdown
-'#' is headers, not comments).
-"""
 from __future__ import annotations
 
 import sys
@@ -23,7 +15,6 @@ def should_skip(p: Path) -> bool:
 
 
 def strip_py_comments(src: str) -> str:
-    """Use tokenize to remove # comments. Preserve shebang on line 1."""
     lines = src.splitlines(keepends=True)
     if not lines:
         return src
@@ -31,7 +22,6 @@ def strip_py_comments(src: str) -> str:
     try:
         tokens = list(tokenize.generate_tokens(StringIO(src).readline))
     except tokenize.TokenizeError:
-        # malformed source - return unchanged
         return src
 
     comments_by_line: dict[int, int] = {}
@@ -39,7 +29,6 @@ def strip_py_comments(src: str) -> str:
         if tok.type != tokenize.COMMENT:
             continue
         row, col = tok.start
-        # preserve shebang on line 1
         if row == 1 and tok.string.startswith("#!"):
             continue
         if row not in comments_by_line or col < comments_by_line[row]:
@@ -54,7 +43,6 @@ def strip_py_comments(src: str) -> str:
             trailing_nl = "\n" if line.endswith("\n") else ""
             stripped_head = head.rstrip()
             if stripped_head == "":
-                # line was comment-only; preserve the blank line
                 new_lines.append(trailing_nl)
             else:
                 new_lines.append(stripped_head + trailing_nl)
@@ -64,13 +52,11 @@ def strip_py_comments(src: str) -> str:
 
 
 def strip_hash_comments_linewise(src: str) -> str:
-    """For .sh / .toml: drop trailing # comments. Preserve shebang on line 1."""
     out = []
     for i, line in enumerate(src.splitlines(keepends=True)):
         if i == 0 and line.startswith("#!"):
             out.append(line)
             continue
-        # find # not inside single/double quotes
         in_single = False
         in_double = False
         cut = None
@@ -101,7 +87,6 @@ def gather_files() -> list[Path]:
         for p in ROOT.rglob(ext):
             if should_skip(p):
                 continue
-            # don't strip ourselves
             if p.resolve() == Path(__file__).resolve():
                 continue
             files.append(p)

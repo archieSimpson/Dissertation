@@ -117,27 +117,6 @@ def gaussian_2d(
     )
 
 def circadian_factor(step: int, period: int, phase_shift: float, amplitude: float) -> float:
-    """
-    Bimodal circadian curve using a quadratic (inverted-parabola) lobe pair:
-
-        c(t) = c_0
-             + max(0, A_m * [ 1 - ((h(t) - mu_m) / sigma_m)**2 ])
-             + max(0, A_e * [ 1 - ((h(t) - mu_e) / sigma_e)**2 ])
-
-    h(t) is "hours since simulation start" — the function treats step 0 as
-    06:00. Each lobe is positive on [mu - sigma, mu + sigma] and exactly 0
-    outside, so the curve has a clean rest plateau between the two lobes.
-
-    Constants are picked so that:
-      * dawn peak (mu_m = 09:30) has lower amplitude than dusk
-      * dusk peak (mu_e = 20:00) is the global maximum of the day
-      * the midday trough (h ~= 8.5..9.5) drops below the 0.28 RESTING
-        threshold so circadian RESTING transitions still fire
-      * agents wake from RESTING around 16:00 as evening lobe rises
-
-    The phase_shift and amplitude parameters are retained for API
-    compatibility; both amplitudes are encoded in A_m and A_e below.
-    """
     h = step * 16.0 / period
 
     c_0     = 0.08

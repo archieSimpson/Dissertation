@@ -1,15 +1,3 @@
-"""Velocity autocorrelation (lag-1) during WALKING and TRAVELLING for
-abundant scenario across landscape seeds 7, 23, 41.
-
-Method follows test_biological_validity.py section 6: for each agent,
-take the first 30 vx samples while in the target state, concatenate
-across agents, compute lag-1 autocorrelation of vx with vx_next.
-
-Output: mean +- SD of the per-seed autocorrelation across N=9 behaviour
-seeds (42..50) per landscape.
-
-Re-uses cached positions.csv for L=7; runs sims in-process for L=23 / L=41.
-"""
 from __future__ import annotations
 
 import time
@@ -28,7 +16,6 @@ LANDSCAPES = [7, 23, 41]
 
 
 def autocorr_for_state(pos: pd.DataFrame, state: str) -> float | None:
-    """Replicates test_biological_validity.py section 6 method."""
     sub = pos[pos["state"] == state].sort_values(["sheep_id", "step"])
     vx_segs: list[float] = []
     for _, grp in sub.groupby("sheep_id"):
@@ -43,7 +30,6 @@ def autocorr_for_state(pos: pd.DataFrame, state: str) -> float | None:
 
 
 def get_positions_for_seed(landscape: int, seed: int) -> pd.DataFrame:
-    """Use cached CSV if present (L=7), otherwise run sim in-process."""
     cached = Path(f"outputs/{SCENARIO}_seed{seed}/positions.csv")
 
 

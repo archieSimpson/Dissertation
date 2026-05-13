@@ -1,12 +1,3 @@
-"""Regenerate the landscape 23 abundant heatmap with current simulation code.
-
-Single purpose: re-simulate landscape_seed = 23 (abundant) for N = 7 seeds
-(matching the existing comparison file in outputs/two_landscapes/abundant/),
-build coverage + grazing per-cell visit count grids, render a 1x2 panel.
-
-Doesn't touch landscape 7 cache or any comparison file other than the L23
-heatmap PNG it overwrites.
-"""
 from __future__ import annotations
 
 import sys

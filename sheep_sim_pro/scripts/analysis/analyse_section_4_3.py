@@ -1,11 +1,3 @@
-"""§4.3 Data Collection — comprehensive metrics extraction for all four
-subsections (uniform_high, uniform_low, radial_increase, corridors).
-
-Resolves positions.csv/metrics.csv from either outputs/<scenario>_seed{N}/
-or outputs/final_frames/<scenario>/ (whichever exists). Ablation runs and
-multi-seed runs are expected at fixed paths populated by
-run_section_4_3_sims.py.
-"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,7 +12,6 @@ FIELD_CX, FIELD_CY = W / 2, H / 2
 
 
 def find_run_dir(scenario: str, seed: int, suffix: str = "") -> Path:
-    """Locate the output directory containing positions.csv for this run."""
     if suffix:
         return OUTPUTS / f"{scenario}_seed{seed}{suffix}"
     candidates = [
@@ -44,7 +35,6 @@ def load(scenario: str, seed: int, suffix: str = "") -> dict:
 
 
 def state_percentages(pos: pd.DataFrame) -> dict[str, float]:
-    """% of agent-steps in each state."""
     total = len(pos)
     return {st: float(100.0 * (pos["state"] == st).sum() / total)
             for st in ("grazing", "walking", "travelling", "regrouping", "resting")}
@@ -186,7 +176,6 @@ def cascade_peak(m: pd.DataFrame) -> int | None:
     return int(m["fresh_walkers"].max())
 
 def time_to_partition(m: pd.DataFrame, threshold: int = 2, sustain: int = 30) -> int | None:
-    """First step where number_of_clusters >= threshold and stays for `sustain` steps."""
     if "number_of_clusters" not in m.columns:
         return None
     cc = m["number_of_clusters"].to_numpy()

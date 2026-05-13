@@ -1,20 +1,3 @@
-"""Inter-agent cumulative-path-length std over time for base vs iso_personality.
-
-Metric: column `path_length_std` from metrics.csv — at each step it's the
-standard deviation of `path_length` across the 40 sheep. Path length is
-each agent's cumulative distance travelled, so the column is monotonically
-non-decreasing and the gap between agents widens whenever per-agent
-variation (movement_vigor x turning_bias) produces different
-trajectories.
-
-  base            : all features off — every agent identical except for
-                    spawn position + heading RNG
-  iso_personality : only personality on (movement_vigor, turning_bias
-                    vary per sheep; OU drift and Markov bias are tracked
-                    but unused because social / foraging are off)
-
-Scenario: abundant on landscape 7, seed 42, 1920 steps.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

@@ -1,11 +1,3 @@
-"""Run the missing sims for the §4.3 data collection plan.
-
-  (a) corridors seeds 43..50 (8 sims, full features)
-  (b) uniform_low + --disable-personality (1 sim)
-  (c) radial_increase + --disable-social (1 sim)
-  (d) corridors + --disable-social (1 sim)
-Total: 11 sims  ~ 10 min wall time.
-"""
 from __future__ import annotations
 import time
 from dataclasses import replace

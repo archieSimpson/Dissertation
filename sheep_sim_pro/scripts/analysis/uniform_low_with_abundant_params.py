@@ -1,13 +1,3 @@
-"""Re-run §4.3.2 uniform_low metrics with ABUNDANT parameters applied.
-
-Scenario name stays 'uniform_low' (so food.py still produces NDVI = 0.1
-everywhere), but cfg.food, cfg.transitions, cfg.flock, cfg.field are
-overridden with the abundant frozen parameter set after the default
-'uniform_low → scarce' inheritance is applied.
-
-Two runs: full features + no-personality ablation. Same seed/landscape
-as the original §4.3.2 table.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

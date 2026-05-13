@@ -1,6 +1,3 @@
-"""Run 9 abundant L=7 simulations (seeds 42..50) in-process and save
-positions.csv for each to outputs/abundant_seed{N}/. Each ~45 s, ~7 min total.
-"""
 from __future__ import annotations
 import time
 from pathlib import Path

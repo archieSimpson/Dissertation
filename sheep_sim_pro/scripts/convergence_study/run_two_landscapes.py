@@ -1,25 +1,3 @@
-"""Convergence study on a chosen scenario across two landscape seeds.
-
-Two envelopes are tracked per seed:
-  * COVERAGE envelope — cell visited by any agent at any step (broader).
-  * GRAZING envelope — cell where any agent had last_food_intake > 0 at any
-    step (subset of coverage; captures where biomass was actually consumed).
-
-Differences from run_convergence.py:
-  - Single scenario (--scenario, default abundant).
-  - Two landscape seeds run side-by-side (default 7 and 23, configurable).
-  - Early-exit when the COVERAGE envelope satisfies the 3%-over-2-consecutive
-    rule; grazing convergence reported as a parallel statistic.
-  - Heatmap and envelope figures use exactly the converged seed set.
-
-Outputs land in convergence_study/outputs/two_landscapes/<scenario>/ so
-multiple scenarios can coexist side-by-side.
-
-Usage:
-    python convergence_study/run_two_landscapes.py
-    python convergence_study/run_two_landscapes.py --scenario scarce
-    python convergence_study/run_two_landscapes.py --landscape-seeds 7 13
-"""
 from __future__ import annotations
 
 import argparse
@@ -62,7 +40,6 @@ def seeds_dir_for(scenario: str) -> Path:
 def run_or_load_seed(
     scenario: str, landscape_seed: int, behaviour_seed: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return (visit_grid, graze_grid) for one (scenario, landscape, behaviour) triple."""
     seed_dir = (
         seeds_dir_for(scenario)
         / f"landscape_{landscape_seed:02d}"
@@ -259,7 +236,6 @@ def plot_envelope(
     graze_env: np.ndarray, graze_count: np.ndarray,
     out_path: Path,
 ) -> None:
-    """2x2 figure: top row coverage, bottom row grazing; left envelope, right count."""
     cfg = build_scenario_config(
         scenario, steps=1, seed=1, landscape_seed=landscape_seed,
     )
@@ -327,7 +303,6 @@ def plot_heatmap(
     conv_n: int,
     out_path: Path,
 ) -> None:
-    """1x2 figure: coverage count vs grazing count at the converged N."""
     cfg = build_scenario_config(
         scenario, steps=1, seed=1, landscape_seed=landscape_seed,
     )

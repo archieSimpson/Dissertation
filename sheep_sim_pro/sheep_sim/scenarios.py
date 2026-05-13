@@ -66,22 +66,6 @@ def _apply_scarce_params(cfg: SimulationConfig) -> SimulationConfig:
 
 
 def _apply_corridors_params(cfg: SimulationConfig) -> SimulationConfig:
-    """Custom corridor parameters separate from abundant/scarce.
-
-    Designed to produce the balanced fission pattern: flock splits roughly
-    50/50 between the two rich strips, agents spread along the corridor
-    (multiple sub-clusters in each), and grazing intensity is high enough
-    that degradation contours develop on both corridors during the day.
-
-    Differences from abundant:
-      - attraction_weight 0.52 -> 0.28      (weaker social pull -> non-unanimous fission)
-      - alignment_weight  0.24 -> 0.14
-      - repulsion_weight  1.18 -> 1.10
-      - repulsion_radius  5    -> 8         (wider personal space, sub-clusters)
-      - stochastic_turn_std 0.55 -> 0.50
-      - ring-style foraging FSM thresholds (low entry, high memory, low residence)
-      - pressure_damage_scale 0.006 -> 0.012 (degradation contours visible)
-    """
     cfg = replace(cfg, food=replace(cfg.food,
         n_patches=1,
         total_food_scale=1.0, initial_biomass_fraction=0.88,

@@ -1,20 +1,3 @@
-"""Turning-angle variance per behavioural state for abundant and scarce
-scenarios across landscape seeds 7, 23, 41.
-
-Method (per seed): for each agent, compute consecutive-step heading angles
-from (x, y) positions, take their finite differences (wrapped to [-pi, pi])
-to get turning angles, partition by `state`, and compute the sample
-variance of turning angles in each state. Then aggregate across N=9 seeds.
-
-Hypothesis: var(GRAZING turning angles) > var(TRAVELLING turning angles)
-            because grazing is area-restricted search (high turning variability)
-            and travelling is directed (low, consistent turning).
-
-Caches:
-  outputs/abundant_seed{42..50}/positions.csv  -- L=7 only
-  outputs/scarce_seed{42..50}/positions.csv    -- L=7 only
-Other (scenario, landscape, seed) combinations are run in-process.
-"""
 from __future__ import annotations
 
 import math
@@ -34,7 +17,6 @@ LANDSCAPES = [7, 23, 41]
 
 
 def turning_angle_variance(pos: pd.DataFrame, state: str) -> float | None:
-    """Sample variance of signed turning angles in the given state."""
     p = pos[pos["state"] == state].sort_values(["sheep_id", "step"])
     if len(p) < 3:
         return None

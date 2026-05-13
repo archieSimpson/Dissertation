@@ -1,24 +1,3 @@
-"""Two-stage protocol: spatial convergence first, then benchmarks at that N.
-
-For each (scenario, landscape) in {abundant, scarce} x {7, 23, 41}:
-
-  Stage 1 (spatial):  run seeds 1..18 until per-cell coverage envelope
-                      stops growing — 3% new-territory threshold over 2
-                      consecutive seeds, with envelope M = 2.
-                      Stop and record N_conv.
-
-  Stage 2 (benchmark): take the metrics.csv files for seeds 1..N_conv and
-                       compute mean +- SD of the four validation metrics
-                       (NND_active, resting_pct, daily_distance,
-                       bimodal_pass). NO convergence rule on these — they
-                       are simply reported at the spatially-converged N.
-
-Each per-seed simulation is run once and produces both visit_grid.npy
-(stage 1) and metrics.csv (stage 2). Cached files are reused where they
-exist, so re-running this script after the first pass is near-instant.
-
-Outputs go to outputs/chapter3_combined/.
-"""
 from __future__ import annotations
 
 import json
@@ -69,7 +48,6 @@ def cache_paths(scenario: str, landscape: int, seed: int) -> tuple[Path, Path, P
 
 
 def run_or_load(scenario: str, landscape: int, seed: int) -> tuple[np.ndarray, np.ndarray, pd.DataFrame, bool]:
-    """Return (visit_grid, graze_grid, metrics_df, ran_now). Cache or run."""
     visit_p, graze_p, metrics_p = cache_paths(scenario, landscape, seed)
     if visit_p.exists() and graze_p.exists() and metrics_p.exists():
         return np.load(visit_p), np.load(graze_p), pd.read_csv(metrics_p), False

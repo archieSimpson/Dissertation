@@ -1,16 +1,3 @@
-"""Three per-cell visit/grazing heatmaps in identical render_heatmap_n9 style.
-
-Produces (all N = 9, landscape_seed = 7, continuous YlOrRd, vmin=1, vmax=9):
-
-  outputs/heatmap_scarce_n9.png             — scarce coverage (any visit)
-  outputs/grazing_heatmap_scarce_n9.png     — scarce grazing  (intake > 0)
-  outputs/grazing_heatmap_abundant_n9.png   — abundant grazing (intake > 0)
-
-Coverage grids are loaded from convergence_study/outputs/seeds/<scenario>/.
-Grazing grids are loaded from
-convergence_study/outputs/two_landscapes/<scenario>/seeds/landscape_07/.
-Missing grazing grids are simulated and cached on first run.
-"""
 from __future__ import annotations
 
 import sys
@@ -34,7 +21,6 @@ OUT_DIR        = HERE / "outputs"
 
 
 def ensure_graze_grid(scenario: str, seed: int) -> np.ndarray:
-    """Return graze_grid for (scenario, LANDSCAPE_SEED, seed). Run+cache if missing."""
     seed_dir = OUT_DIR / "two_landscapes" / scenario / "seeds" / f"landscape_{LANDSCAPE_SEED:02d}" / f"seed_{seed:02d}"
     seed_dir.mkdir(parents=True, exist_ok=True)
     graze_path = seed_dir / "graze_grid.npy"
@@ -77,7 +63,6 @@ def ensure_graze_grid(scenario: str, seed: int) -> np.ndarray:
 
 
 def load_visit_grid(scenario: str, seed: int) -> np.ndarray:
-    """Load visit_grid from the run_convergence cache."""
     return np.load(OUT_DIR / "seeds" / scenario / f"seed_{seed:02d}" / "visit_grid.npy")
 
 
@@ -87,7 +72,6 @@ def render_heatmap(
     kind: str,
     out_path: Path,
 ) -> None:
-    """Single-panel per-cell count heatmap matching render_heatmap_n9.py exactly."""
     cfg = build_scenario_config(scenario, steps=1, seed=1, landscape_seed=LANDSCAPE_SEED)
     sim = SheepSimulation(cfg)
     ndvi = sim.food.ndvi

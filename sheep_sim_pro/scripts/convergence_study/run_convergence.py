@@ -1,23 +1,3 @@
-"""
-Convergence study for the sheep-simulation framework — §4.1.1.
-
-Runs N successive behaviour seeds against a fixed landscape on each scenario,
-incrementally builds an envelope of cells visited by at least M of the N
-seeds, and tracks the per-seed new-territory fraction. Convergence is
-declared when this fraction stays below a threshold over a configured number
-of consecutive seeds.
-
-Outputs:
-    outputs/seeds/<scenario>/seed_NN/visit_grid.npy   per-seed binary grid
-    outputs/convergence_data.csv                       full per-seed table
-    outputs/convergence_curve.png                      headline line graph
-    outputs/envelope_<scenario>.png                    envelope + visit count
-    outputs/sensitivity.csv                            convergence N vs threshold
-
-Usage (from sheep_sim_pro/, with the venv active):
-    python convergence_study/run_convergence.py
-    python convergence_study/run_convergence.py --max-seeds 20 --steps 1920
-"""
 from __future__ import annotations
 
 import argparse
@@ -54,7 +34,6 @@ SEEDS_DIR = OUT_DIR / "seeds"
 
 
 def run_or_load_seed(scenario: str, seed: int, steps: int) -> np.ndarray:
-    """Return the binary visit grid for (scenario, seed). Cache to .npy."""
     seed_dir = SEEDS_DIR / scenario / f"seed_{seed:02d}"
     seed_dir.mkdir(parents=True, exist_ok=True)
     grid_path = seed_dir / "visit_grid.npy"

@@ -1,11 +1,3 @@
-"""Visit-frequency heatmap for iso_terrain runs across 3 additional
-landscape seeds (23, 41, 53). Each landscape gets its own PDF mirroring
-figures/terrain_verification.pdf for L=7.
-
-Same iso_terrain config: features.terrain on, everything else off. Two
-forces are always active regardless (boundary + stochastic jitter) — see
-plot_iso_terrain_visit_heatmap.py for the full caveat.
-"""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -40,7 +32,6 @@ FEATURES = FeatureConfig(
 
 
 def run_and_collect(landscape_seed: int, behaviour_seed: int) -> tuple[np.ndarray, np.ndarray]:
-    """Return (heatmap, terrain)."""
     cfg = build_scenario_config(
         SCENARIO, steps=STEPS, seed=behaviour_seed, landscape_seed=landscape_seed,
     )

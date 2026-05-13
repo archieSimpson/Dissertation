@@ -1,18 +1,3 @@
-"""Visit-frequency heatmap for an iso_terrain run, overlaid with terrain
-elevation contours.
-
-Inputs:
-    outputs/iso_terrain/positions.csv  (76,800 rows = 40 agents x 1920 steps)
-    terrain (88 x 56) regenerated deterministically via
-    build_environment(np.random.default_rng(7), FieldConfig())
-
-Output:
-    figures/terrain_verification.pdf
-
-Verification goals (printed to stdout):
-    1. hill summits lighter than corridors between hills
-    2. heatmap not dominated by edge effects
-"""
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,17 +1,3 @@
-"""Inter-agent cumulative-food-intake std over time for base vs iso_personality.
-
-Metric: column `cumfood_std` from metrics.csv — at each step it's the
-standard deviation of `cumulative_food` across the 40 sheep. The quantity
-is monotonically non-decreasing because each agent's cumulative_food is
-itself monotonic, and the spread between agents widens whenever
-heterogeneous behaviour (movement_vigor x turning_bias) produces different
-intake rates.
-
-  base            : all features off
-  iso_personality : only personality on
-
-Scenario: abundant on landscape 7, seed 42, 1920 steps.
-"""
 from __future__ import annotations
 
 from dataclasses import replace

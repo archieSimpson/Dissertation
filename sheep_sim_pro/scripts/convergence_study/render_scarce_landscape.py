@@ -1,9 +1,3 @@
-"""Single-panel render of the scarce food landscape for landscape_seed = 7.
-
-Same field extent and colour conventions as the other convergence_study
-figures (YlGn, [0, 1]) so it composes cleanly alongside the per-cell
-visit/grazing heatmaps.
-"""
 from __future__ import annotations
 
 import sys

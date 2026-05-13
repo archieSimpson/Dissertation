@@ -110,14 +110,6 @@ class TimeConfig:
  
 @dataclass(frozen=True)
 class FeatureConfig:
-    """Independent toggles for each behavioural subsystem.
- 
-    With all True, the model matches the full six-mechanism setup.
-    With all False, agents perform a correlated random walk: boundary force
-    and stochastic turn noise only. No food awareness, no patch departure,
-    no social cohesion, no circadian rhythm, no memory, no personality
-    variation, no terrain response.
-    """
     foraging: bool = True
     social: bool = True
     circadian: bool = True

@@ -1,15 +1,3 @@
-"""Nearest-neighbour distance and cluster count over time for the base and
-iso_social configurations on abundant (landscape 7, seed 42, 1920 steps).
-
-  base       : all features disabled (correlated random walk, boundary only)
-  iso_social : only social force enabled (Reynolds 3-zone + REGROUPING +
-               departure contagion); foraging, circadian, memory,
-               personality, terrain all off
-
-NND on the primary y-axis (left), cluster count on the secondary y-axis
-(right, twin). Solid lines = NND, dashed lines = clusters; colour
-distinguishes base (blue) from iso_social (green).
-"""
 from __future__ import annotations
 
 from dataclasses import replace

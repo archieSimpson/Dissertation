@@ -11,7 +11,6 @@ from sheep_sim.environment.food import build_food_landscape
 
 def grid_idx(x: float, y: float, width: float, height: float,
              cols: int, rows: int) -> tuple[int, int]:
-    """Match simulation.py:_grid_idx exactly."""
     c = min(cols - 1, max(0, int((x / width) * cols)))
     r = min(rows - 1, max(0, int((y / height) * rows)))
     return r, c
@@ -23,7 +22,6 @@ def quartile_stats_for_seed(
     behaviour_seed: int,
     positions_csv: Path,
 ) -> dict:
-    """Return per-cell visit/graze counts binned by NDVI quartile."""
 
     cfg = build_scenario_config(
         scenario, seed=behaviour_seed, landscape_seed=landscape_seed

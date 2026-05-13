@@ -1,10 +1,3 @@
-"""Render the world produced by landscape_seed = 7.
-
-Produces a 1x3 figure: terrain elevation, abundant food landscape, scarce food
-landscape. Terrain is identical across scenarios (it depends only on
-landscape_seed); food differs because each scenario's NDVI generator is
-parameterised differently in scenarios.py.
-"""
 from __future__ import annotations
 
 import sys

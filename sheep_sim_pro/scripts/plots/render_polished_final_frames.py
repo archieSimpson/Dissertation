@@ -1,13 +1,3 @@
-"""Polished (no title, larger axis labels + legend) version of each
-scenario's final frame.
-
-Matches the styling treatment applied to the state-budget plot:
-  - no title
-  - axis labels at 16 pt, tick labels at 12 pt
-  - legend at 14 pt, upper right
-Each scenario is re-simulated in-process (deterministic given seeds), so
-the rendered content is bit-identical to the original final_frame.png.
-"""
 from __future__ import annotations
 
 from pathlib import Path
