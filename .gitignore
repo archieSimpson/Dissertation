@@ -2,6 +2,24 @@
 venv
 env
 
-*output
-outputs
-.toml
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+.DS_Store
+Thumbs.db
+
+_build_*.py
+
+*.tar.gz
+*.zip
+*.log
+
+outputs/
+outputs_v*/
+*_outputs/
+sheep_sim_pro/data/
+
+__azurite_*.json
+__blobstorage__/
