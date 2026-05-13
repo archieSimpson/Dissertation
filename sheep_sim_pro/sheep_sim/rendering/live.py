@@ -102,9 +102,16 @@ class LiveRenderer:
 
         self.ax_field.scatter(positions[:, 0], positions[:, 1], c=colours, s=sizes,
                               edgecolors="black", linewidths=0.35, zorder=3)
-        self.ax_field.quiver(positions[:, 0], positions[:, 1],
-                             velocities[:, 0], velocities[:, 1],
-                             angles="xy", scale_units="xy", scale=1.7, width=0.0028, alpha=0.85, zorder=4)
+
+
+        arrow_mask = np.array([
+            s.state not in {BehaviourState.WALKING, BehaviourState.TRAVELLING}
+            for s in flock
+        ])
+        if arrow_mask.any():
+            self.ax_field.quiver(positions[arrow_mask, 0], positions[arrow_mask, 1],
+                                 velocities[arrow_mask, 0], velocities[arrow_mask, 1],
+                                 angles="xy", scale_units="xy", scale=1.7, width=0.0028, alpha=0.85, zorder=4)
         self.ax_field.scatter([centroid[0]], [centroid[1]], marker="x", s=120, c="white", linewidths=2.0, zorder=5)
         self.ax_field.add_patch(plt.Circle(
             (centroid[0], centroid[1]), max(spread, 1.0),

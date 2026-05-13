@@ -22,13 +22,13 @@ class SheepAgent:
     heading: float
     state: BehaviourState
 
-    energy: float = 0.85
     last_food_intake: float = 0.0
     cumulative_food: float = 0.0
 
     state_age: int = 0
     path_length: float = 0.0
     separation_steps: int = 0
+    contagion_steps: int = 0
     regroup_cooldown: int = 0
 
     site_fidelity: float = 1.0
@@ -40,7 +40,6 @@ class SheepAgent:
     preferred_spacing: float = 1.0
 
     memory_map: np.ndarray | None = None
-    home_target: np.ndarray | None = None
 
     explore_heading: float = 0.0
     explore_timer: int = 0
@@ -64,5 +63,5 @@ class SheepAgent:
         return (
             f"SheepAgent(id={self.sheep_id}, state={self.state.value}, "
             f"pos=({self.position[0]:.1f},{self.position[1]:.1f}), "
-            f"speed={self.speed():.3f}, energy={self.energy:.2f})"
+            f"speed={self.speed():.3f})"
         )

@@ -40,7 +40,9 @@ class SheepSimulation:
 
         self.flock = initialise_flock(cfg, self.behaviour_rng)
         for sheep in self.flock:
-            initialise_stochastic_traits(sheep, self.behaviour_rng)
+            initialise_stochastic_traits(
+                sheep, self.behaviour_rng, personality=cfg.features.personality
+            )
 
         self.metrics = MetricsRecorder()
 
@@ -75,9 +77,17 @@ class SheepSimulation:
                         scenario=self.cfg.scenario,
                         food=self.food,
                     )
+                if step % 2 == 0:
+                    pct = step / max(self.cfg.steps - 1, 1) * 100
+                    states = {s.state.value: 0 for s in self.flock}
+                    for sh in self.flock:
+                        states[sh.state.value] = states.get(sh.state.value, 0) + 1
+                    state_str = " ".join(f"{k[0].upper()}:{v}" for k, v in sorted(states.items()))
+                    print(f"\rStep {step:>5}/{self.cfg.steps}  ({pct:5.1f}%)  [{state_str}]", end="", flush=True)
                 if renderer is not None and step % self.cfg.output.render_every_n_steps == 0:
                     renderer.draw(self.flock, step, self.cfg.scenario)
         finally:
+            print()
             if renderer is not None:
                 renderer.close()
 
@@ -106,19 +116,23 @@ class SheepSimulation:
         )
 
     def step(self, step: int) -> None:
-        active_factor = circadian_factor(
-            step=step,
-            period=self.cfg.circadian.day_length_steps,
-            phase_shift=self.cfg.circadian.active_peak_shift,
-            amplitude=self.cfg.circadian.active_amplitude,
-        )
+        if self.cfg.features.circadian:
+            active_factor = circadian_factor(
+                step=step,
+                period=self.cfg.circadian.day_length_steps,
+                phase_shift=self.cfg.circadian.active_peak_shift,
+                amplitude=self.cfg.circadian.active_amplitude,
+            )
+        else:
+            active_factor = 1.0
 
         positions = np.array([s.position for s in self.flock], dtype=float)
         centroid  = positions.mean(axis=0)
         spread    = float(np.mean(np.linalg.norm(positions - centroid, axis=1)))
 
-        for sheep in self.flock:
-            step_ou(sheep, self.behaviour_rng, dt=self.cfg.dt)
+        if self.cfg.features.personality:
+            for sheep in self.flock:
+                step_ou(sheep, self.behaviour_rng, dt=self.cfg.dt)
 
         contexts: dict[int, BehaviourContext] = {}
         for sheep in self.flock:
@@ -126,10 +140,34 @@ class SheepSimulation:
                 sheep, centroid, spread, active_factor
             )
 
+
+        prev_states = {sh.sheep_id: sh.state for sh in self.flock}
+
         for sheep in self.flock:
             update_agent_state(
                 sheep, contexts[sheep.sheep_id], self.cfg, self.behaviour_rng
             )
+
+
+        if self.cfg.features.social:
+            from sheep_sim.core.agents import BehaviourState as _BS
+            departures = [
+                sh for sh in self.flock
+                if prev_states[sh.sheep_id] == _BS.GRAZING
+                and sh.state in (_BS.WALKING, _BS.TRAVELLING)
+            ]
+            if departures:
+                positions_arr = np.array([sh.position for sh in self.flock])
+                for dep in departures:
+                    dists = np.linalg.norm(positions_arr - dep.position, axis=1)
+                    for i, sh in enumerate(self.flock):
+                        if sh.sheep_id != dep.sheep_id and dists[i] < self.cfg.flock.neighbour_radius * 0.8:
+                            sh.contagion_steps = max(sh.contagion_steps, 6)
+
+
+            for sh in self.flock:
+                if sh.contagion_steps > 0:
+                    sh.contagion_steps -= 1
 
         new_velocities = {
             sheep.sheep_id: desired_velocity(
@@ -171,20 +209,8 @@ class SheepSimulation:
             sheep.last_food_intake = intake
             sheep.cumulative_food += intake
 
-            sheep.energy = min(1.0, max(0.0, (
-                sheep.energy
-                - self.cfg.transitions.energy_loss_per_step * (0.3 + sheep.speed())
-                + self.cfg.transitions.food_gain_scale * intake
-                + self.cfg.transitions.fatigue_recovery_scale * (
-                    1.0 if sheep.state == BehaviourState.RESTING else 0.0
-                )
-            )))
-
-            self._update_memory(sheep)
-
-        self.food.regrow(
-            self.cfg.time.real_seconds_per_step / 86400.0, self.cfg.food
-        )
+            if self.cfg.features.memory:
+                self._update_memory(sheep)
 
     def _build_context(
         self,
@@ -208,9 +234,7 @@ class SheepSimulation:
             flock_spread       = spread,
             neighbour_count    = self._count_neighbours(sheep),
             active_factor      = active_factor,
-            memory_target      = self._memory_target(sheep),
-            home_target        = self._home_target(sheep),
-            shade_value        = self.environment.sample_shade(x, y),
+            memory_target      = self._memory_target(sheep) if self.cfg.features.memory else sheep.position.copy(),
             terrain_value      = self.environment.sample_terrain(x, y),
             recent_intake_rate = sheep.last_food_intake,
         )
@@ -258,19 +282,6 @@ class SheepSimulation:
             (c + 0.5) / self.cfg.field.grid_cols * self.cfg.field.width,
             (r + 0.5) / self.cfg.field.grid_rows * self.cfg.field.height,
         ], dtype=float)
-
-    def _home_target(self, sheep: SheepAgent) -> np.ndarray:
-        assert sheep.home_target is not None
-        if sheep.last_food_intake > 0.004:
-            blend = 0.18 if self.cfg.scenario == "abundant" else 0.08
-            sheep.home_target = (
-                (1.0 - blend) * sheep.home_target + blend * sheep.position
-            )
-        elif self.cfg.scenario == "abundant":
-            sheep.home_target = (
-                0.995 * sheep.home_target + 0.005 * sheep.position
-            )
-        return sheep.home_target.copy()
 
     def _grid_idx(self, pos: np.ndarray) -> tuple[int, int]:
         c = min(

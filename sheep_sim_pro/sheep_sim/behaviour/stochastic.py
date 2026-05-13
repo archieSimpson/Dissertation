@@ -20,14 +20,21 @@ def initialise_stochastic_traits(
     sheep: SheepAgent,
     rng: np.random.Generator,
     ou_sigma_init: float = 0.05,
+    personality: bool = True,
 ) -> None:
-    sheep.ou_attraction = float(rng.normal(0.0, ou_sigma_init))
-    sheep.ou_alignment  = float(rng.normal(0.0, ou_sigma_init))
-    sheep.ou_repulsion  = float(rng.normal(0.0, ou_sigma_init))
+    if personality:
+        sheep.ou_attraction = float(rng.normal(0.0, ou_sigma_init))
+        sheep.ou_alignment  = float(rng.normal(0.0, ou_sigma_init))
+        sheep.ou_repulsion  = float(rng.normal(0.0, ou_sigma_init))
 
-    mat = rng.uniform(MARKOV_LO, MARKOV_HI, size=(5, 5)).astype(float)
-    np.fill_diagonal(mat, 1.0)
-    sheep.transition_matrix = mat
+        mat = rng.uniform(MARKOV_LO, MARKOV_HI, size=(5, 5)).astype(float)
+        np.fill_diagonal(mat, 1.0)
+        sheep.transition_matrix = mat
+    else:
+        sheep.ou_attraction = 0.0
+        sheep.ou_alignment  = 0.0
+        sheep.ou_repulsion  = 0.0
+        sheep.transition_matrix = None
 
 def step_ou(sheep: SheepAgent, rng: np.random.Generator, dt: float = 1.0) -> None:
     sqrt_dt = float(np.sqrt(dt))

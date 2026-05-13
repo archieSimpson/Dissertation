@@ -46,7 +46,7 @@ def compute_nsd(pos_df: pd.DataFrame) -> pd.DataFrame:
             rows.append({"sheep_id": sid, "step": row["step"], "nsd": nsd})
     return pd.DataFrame(rows)
 
-def circadian_summary(group_df: pd.DataFrame, day_length_steps: int = 1200) -> pd.DataFrame:
+def circadian_summary(group_df: pd.DataFrame, day_length_steps: int = 1920) -> pd.DataFrame:
     group_df = group_df.copy()
     group_df["day"] = group_df["step"] // day_length_steps
     rows = []
@@ -125,7 +125,7 @@ def per_individual_summary(pos_df: pd.DataFrame) -> pd.DataFrame:
     )
     mean_speed = pos_df.groupby("sheep_id")["speed"].mean().reset_index(name="mean_speed")
     result = (
-        last[["sheep_id", "path_length", "cumulative_food", "energy"]]
+        last[["sheep_id", "path_length", "cumulative_food"]]
         .merge(time_budget, on="sheep_id")
         .merge(mean_speed, on="sheep_id")
     )

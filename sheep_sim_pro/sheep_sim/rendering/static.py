@@ -22,10 +22,10 @@ def save_final_frame(
     fig, ax = plt.subplots(figsize=(12, 8))
 
     field_img = np.clip(
-        0.80 * food.biomass + 0.15 * food.ndvi - 0.15 * (1.0 - food.health), 0.0, None
+        0.80 * food.biomass + 0.15 * food.ndvi - 0.15 * (1.0 - food.health), 0.0, 1.0
     )
     ax.imshow(field_img, origin="lower", extent=[0, env.width, 0, env.height],
-              aspect="auto", alpha=0.90, cmap="YlGn")
+              aspect="auto", alpha=0.90, cmap="YlGn", vmin=0.0, vmax=1.0)
     ax.contour(food.x_coords, food.y_coords, 1.0 - food.health,
                levels=[0.2, 0.35, 0.5], colors=["#d95f02"], linewidths=0.8)
 
