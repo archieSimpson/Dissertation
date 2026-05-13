@@ -5,7 +5,7 @@ Author: Archibald Simpson
 
 
 ## Demo
-| Abundant Step: 0 | Abundant Step: 1200 |
+| Abundant Step: 0 | Abundant Step: 1350 |
 |--------|--------|
 | <img width="350" src="https://github.com/user-attachments/assets/e69a375b-8b6d-45c7-b5db-15f69af8164e" /> | <img width="350" src="https://github.com/user-attachments/assets/0f4d0747-6b5c-4067-ac1a-9a26eb3134ca" /> |
 
@@ -13,34 +13,44 @@ Author: Archibald Simpson
 
 **Per-mechanism verification:** [foraging](https://youtu.be/uoeiTVrs3Iw) · [social](https://youtu.be/Ho0PSxDwLZU) · [circadian](https://youtu.be/hkgaW0vCnR8)
 
+
+## Summary
+
+Sheep movement in free-ranging environments is shaped by the interactions of multiple biological behaviours, yet existing agent-based models integrate at most two or three. Uneven flock distribution caused by these interactions leads to overgrazing in some areas and underutilisation in others. This project addresses that gap by developing an agent-based model that integrates six biological behaviours into a single computational framework to predict grazing patterns and analyse emergent outcomes.
+
+The behavioural mechanisms implemented and integrated are social cohesion, foraging, circadian activity, memory maps, personality, and terrain. Each mechanism was implemented as an independently activatable module and verified in isolation against a correlated random-walk baseline before integration. The integrated simulation then models forty sheep over a sixteen-hour active day in two distinct environments: an abundant environment with plentiful grass, and a scarce environment with very little grass. The behaviours are governed by a five-state finite-state machine spanning GRAZING, WALKING, TRAVELLING, REGROUPING, and RESTING.
+
+The model was evaluated against flock-pattern behaviours and four GPS-telemetry benchmarks drawn from the existing literature: nearest-neighbour distance, resting fraction, daily distance, and velocity autocorrelation. Heatmaps were generated from the convergence process to depict the flock's movement and grazing patterns over a given day, alongside a state-composition analysis across the two landscapes. Four additional artificial landscapes were used to probe the internal coherence of the integrated mechanisms and observe emergent outcomes under a controlled environment.
+
+
+
+
 ## Project Structure
 
 ```
-sheep_sim_pro/
+random-walk-simulation/
 ├── pyproject.toml
 ├── README.md
+├── .gitignore
 │
-├── sheep_sim/                    
-│   ├── __main__.py               
-│   ├── simulation.py             
-│   ├── scenarios.py              
+├── sheep_sim/
+│   ├── __main__.py
+│   ├── simulation.py
+│   ├── scenarios.py
 │   │
-│   ├── core/                     
-│   ├── behaviour/                
-│   ├── environment/              
-│   ├── metrics/                  
-│   ├── rendering/                
-│   └── io/                       
+│   ├── core/
+│   ├── behaviour/
+│   ├── environment/
+│   ├── metrics/
+│   ├── rendering/
+│   └── io/
 │
-└── scripts/                      
-    ├── runs/                     
-    ├── analysis/                 
-    ├── plots/                    
-    ├── convergence_study/        
-    ├── diagnostics/               
-    └── tools/                     
-```
-
+├── scripts/
+    ├── runs/
+    ├── analysis/
+    ├── plots/
+    ├── convergence_study/
+    ├── diagnostics/
 ---
 
 ## Installation
